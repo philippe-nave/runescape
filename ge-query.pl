@@ -65,6 +65,11 @@ foreach my $key (sort { $a <=> $b } keys %categories){
 # let's tinker with category 0 (miscellaneous items)
 # first, we fetch the item totals by first letter as a JSON object
 #
+
+print "===========================================\n";
+print "Looking at category 0 (miscellaneous items)\n";
+print "===========================================\n";
+
 $URL = "https://secure.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=0";
 $content = get($URL);
 print "$content\n";
@@ -79,10 +84,78 @@ $text = decode_json($content);
 
 my @alpha = @{ $text->{'alpha'} };
 foreach my $a ( @alpha ) {
-  #print $a->{"letter"} . "\n";
-  my $letter = $a->{"letter"};
-  my $items = $a->{"items"};
-  print "Letter $letter has $items items.\n";
+   #print $a->{"letter"} . "\n";
+   my $letter = $a->{"letter"};
+   my $items = $a->{"items"};
+   print "Letter $letter has $items items.\n";
+
+   # pound sign must be specified as %23
+   if ( $letter eq "#" ) { $letter = "%23"; }
+
+   # go get the items for this letter
+
+   print "----------------------------------------\n";
+   print "Getting list for letter $letter\n";
+   print "----------------------------------------\n";
+   $URL="https://services.runescape.com/m=itemdb_rs/api/catalogue/items.json?category=0&alpha=$letter&page=1";
+   $letter_content = get($URL);
+
+   # decode this JSON object into a data structure
+   $letter_text = decode_json($letter_content);
+   print "$letter_content\n";
+
+   my @items = @{ $letter_text->{'items'} };
+   foreach my $item ( @items ) {
+
+      my $icon = $item->{"icon"};
+      my $icon_large = $item->{"icon_large"};
+      my $id = $item->{"id"};
+      my $type = $item->{"type"};
+      my $typeIcon = $item->{"typeIcon"};
+      my $name = $item->{"name"};
+      my $description = $item->{"description"};
+      my $members = $item->{"members"};
+
+      # 'current' and 'today' both have sub-elements
+      # ok, well - this didn't work..
+      #
+      # my @current = @{ $item->{'current'} };
+      # foreach my $current_item ( @items ) { # should only be one item, i think?
+      #    my $trend = $current_item->{"trend"};
+      #    my $price = $current_item->{"price"};
+      #    print "Current trend: $trend Current price: $price\n";
+      # }
+
+      my $current = $item->{"current"};
+      print "current: $current\n";
+ 
+      # hmmm.. 'current' is apparently a hash
+      # aaand, this doesn't work either. Bedtime for me!
+
+      my %current = $item->{"current"};
+      foreach my $current_key (keys %current){
+         print "$current_key $current{$current_key}\n";
+      }
+
+
+      print "\n";
+      print "name: $name\n";
+      print "icon: $icon\n";
+      print "icon_large: $icon_large\n";
+      print "id: $id type: $type members: $members\n";
+      print "typeIcon: $typeIcon\n";
+      print "description: $description\n";
+
+# {"current":{"trend":"neutral","price":"124.2m"},"today":{"trend":"neutral","price":0},}]}
+
+
+
+
+
+
+   }
+
+
 }
 
 
