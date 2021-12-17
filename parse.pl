@@ -69,6 +69,7 @@ foreach $key (keys %splithash) {
    my @small_list = split(/:/, $key);
    my $character = $small_list[1];
    $character =~ tr /"//d;
+   $character =~ tr / //d;
 
    my $value = $splithash{$key};
    my @small_value_list = split(/:/, $value);
