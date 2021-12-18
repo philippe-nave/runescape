@@ -32,25 +32,46 @@ sub fetch_category {
 
    my $URL = "https://secure.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=$category_id";
    my $content = get($URL);
-   print "$content\n";
+   # print "$content\n";
 
-   # decode this JSON object into a data structure
-   my $category_list = decode_json($content);
-   my @alpha = @{ $category_list->{'alpha'} };
+   %letters_hash = parse_json_types($content);
 
-   foreach my $a ( @alpha ) {
-      my $letter = $a->{"letter"};
-      my $items = $a->{"items"};
-      print "Letter $letter has $items items.\n";
-   
+   # now, let's have a look at the proper hash
+   # for this category (list of letters and item counts)
+
+   foreach $letter (keys %letters_hash) {
+
+      print "Letter: $letter ";
+      my $items = $letters_hash{$letter};
+      print "Items: $items\n";
+
       # pound sign must be specified as %23
       if ( $letter eq "#" ) { $letter = "%23"; }
 
       if ($items > 0) {
          fetch_items($category_id,$letter,$items);
+exit; #DEBUG
       }
-   
-   } # end of loop through letter list for this category
+   }
+
+
+#   # decode this JSON object into a data structure
+#   my $category_list = decode_json($content);
+#   my @alpha = @{ $category_list->{'alpha'} };
+#
+#   foreach my $a ( @alpha ) {
+#      my $letter = $a->{"letter"};
+#      my $items = $a->{"items"};
+#      print "Letter $letter has $items items.\n";
+#   
+#      # pound sign must be specified as %23
+#      if ( $letter eq "#" ) { $letter = "%23"; }
+#
+#      if ($items > 0) {
+#         fetch_items($category_id,$letter,$items);
+#      }
+#   
+#   } # end of loop through letter list for this category
 
    print "\n";
 
@@ -78,11 +99,21 @@ sub fetch_items {
 
       # decode this JSON object into a data structure
 
-      if ($letter_content =~ /^{/) {
-         $letter_text = decode_json($letter_content);
-      } else {
-         next;
-      }
+      # if ($letter_content =~ /^{/) {
+      #    $letter_text = decode_json($letter_content);
+      # } else {
+      #    next;
+      # }
+
+      # kind of an ill-informed speculative Hail Mary...
+      #
+      # my $json = JSON->new;
+      # $letter_text = $json->decode_prefix($letter_content);
+      # print "DEBUG: letter_text is $letter_text\n";
+      
+      
+      $letter_text = decode_json($letter_content);
+      
 
       my @items = @{ $letter_text->{'items'} };
       foreach my $item ( @items ) {
@@ -121,3 +152,68 @@ sub fetch_items {
 
 
 } # end of fetch_items subroutine
+
+
+
+#=================================================================
+ 
+ 
+
+
+
+
+
+
+
+sub parse_json_types {
+
+   my $json_string = $_[0];
+
+   # strip off outer braces
+   $json_string =~ s/^\{//;
+   $json_string =~ s/\}$//;
+
+   # getting very specific and hard-coded at this point - 
+   # this will only work on this specific JSON string.
+   #
+   # So, let's eat everything from the start to the second [ character.
+
+   $index = index($json_string,"["); # this is the first [ position
+   $index++; # bump it up by 1
+   $index = index($json_string, "[", $index);
+
+   $json_string = substr($json_string, $index);
+ 
+   # cool! now, remove outer [] pair
+   $json_string =~ s/^\[//;
+   $json_string =~ s/\]$//;
+
+   # This actually looks like a hash - albeit a weird-looking
+   # one that requires more massaging. Let's try to get it into
+   # a hash table, for starters.
+
+   %splithash = split(/,/, $json_string);
+
+   my %properhash; # declare an empty hash and then add to it
+
+   foreach $key (keys %splithash) {
+      my @small_list = split(/:/, $key);
+      my $character = $small_list[1];
+      $character =~ tr /"//d;
+      $character =~ tr / //d;
+
+      my $value = $splithash{$key};
+      my @small_value_list = split(/:/, $value);
+      my $small_value = $small_value_list[1];
+      $small_value =~ tr /"//d;
+      $small_value =~ tr /}//d;
+      $value = $small_value;
+
+      # add the proper key-value pair to the hash
+      $properhash {$character} = $value;
+
+   } # end of loop through formatted hash table
+
+   return %properhash;
+
+} # end of subroutine parse_json_types
