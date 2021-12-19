@@ -10,7 +10,37 @@ $json = "{\"types\":[],\"alpha\":[{\"letter\":\"#\",\"items\":3},{\"letter\":\"a
 
 $json_itempage = "{\"total\":956,\"items\":[{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39935,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (1/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":41},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39953,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (10/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":33},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39955,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (11/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":26},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39957,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (12/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":24},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39959,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (13/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":25},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39961,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (14/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":21},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39963,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (15/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":27},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39965,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (16/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":27},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39967,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune 17/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":33},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39937,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (2/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":29},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39939,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (3/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":27},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"},{\"icon\":\"obj.gif\",\"icon_large\":\"obj.gif\",\"id\":39941,\"type\":\"Miscellaneous\",\"typeIcon\":\"Miscellaneous\",\"name\":\"A mis-fortune (4/17)\",\"description\":\"A mis-fortune.\",\"current\":{\"trend\":\"neutral\",\"price\":27},\"today\":{\"trend\":\"neutral\",\"price\":0},\"members\":\"true\"}]}";
 
-print "$json_itempage\n";
+print "$json_itempage\n\n";
+
+# lose the opening and closing curly braces
+
+$json_itempage =~ s/^{//;
+$json_itempage =~ s/}$//;
+
+# lose the open [ set and closing ]
+
+$json_itempage =~ s/^[^\[]+\[//;
+$json_itempage =~ s/\]$//;
+
+# try to eat "today":{"trend":"neutral","price":0}, strings out of the JSON
+# we don't really want that information anyway at this level
+
+#$json_itempage =~ s/\"today\":{\"trend\":/YUTZ/g;
+$json_itempage =~ s/\"today\":{[^\}]+},//g;
+print "$json_itempage\n\n";
+
+# try to eat "current":{"trend":"neutral","price":26}, strings out of the JSON
+# we don't really want that information anyway at this level
+
+$json_itempage =~ s/\"current\":{[^\}]+},//g;
+print "$json_itempage\n\n";
+
+# now, we have to do a comma split with {} sets of things that contain commas
+# i.e. {foo:bar,zen:quux},{next:yang,zing=bop} with each {} being an item
+
+
+
+
 exit; #DEBUG
 
 %types_hash = parse_json_types($json);
