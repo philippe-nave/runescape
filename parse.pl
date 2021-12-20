@@ -35,8 +35,34 @@ print "$json_itempage\n\n";
 $json_itempage =~ s/\"current\":{[^\}]+},//g;
 print "$json_itempage\n\n";
 
-# now, we have to do a comma split with {} sets of things that contain commas
+# now, we have to pull out sets of things that contain commas
 # i.e. {foo:bar,zen:quux},{next:yang,zing=bop} with each {} being an item
+
+@sets = $json_itempage =~ /\{[^\}]+\}/g; # just match {stuff} one after another
+
+foreach (@sets) {
+
+   $setpiece = $_;
+   print "set piece: $setpiece\n";
+
+   # each set piece is wrapped in {} - remove this
+
+   $setpiece =~ s/^\{//;
+   $setpiece =~ s/\}$//;
+   print "set piece: $setpiece\n";
+
+   # just whack all the double quotes
+   $setpiece =~ s/\"//g;
+   print "set piece: $setpiece\n";
+
+   %sethash = split(/[,:]/, $setpiece);
+
+   foreach $setkey (keys %sethash) {
+      print "Key: $setkey ";
+      my $setvalue = $sethash{$setkey};
+      print "Value: $setvalue\n";
+   }
+}
 
 
 
