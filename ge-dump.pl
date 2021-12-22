@@ -12,6 +12,9 @@ use Data::Dumper;
 
 my $dbh = utilities::getDatabaseHandle;
 
+open $log_file_handle, '>', "json.log"; 
+
+
 $sql = "select category_id, category_name from categories order by category_id";
 $stmt = $dbh->prepare($sql);
 $stmt->execute();
@@ -23,6 +26,9 @@ while ($hash = $stmt->fetchrow_hashref) {
    fetch_category($category_id);
 
 } #end of loop through category ID list from database
+
+print "The program ran for ", time() - $^T, " seconds\n";
+close $log_file_handle;
 
 exit;  # end of main program body
 
@@ -41,16 +47,15 @@ sub fetch_category {
 
    foreach $letter (keys %letters_hash) {
 
-      print "Letter: $letter ";
       my $items = $letters_hash{$letter};
-      print "Items: $items\n";
+      print "Category: $category_id Letter: $letter Items: $items\n";
 
       # pound sign must be specified as %23
       if ( $letter eq "#" ) { $letter = "%23"; }
 
       if ($items > 0) {
          fetch_items($category_id,$letter,$items);
-exit; #DEBUG
+#exit; #DEBUG
       }
    }
 
@@ -71,8 +76,13 @@ sub fetch_items {
 
       $URL="https://services.runescape.com/m=itemdb_rs/api/catalogue/items.json?category=$category_id&alpha=$letter&page=$page_num";
       $letter_content = get($URL);
-      print "Got page $page_num of results\n";
+
+      sleep(10); # half-assed workaround for site's flood protection
+
+      print "Got page $page_num of results for category $category_id letter $letter\n";
       # print "$letter_content\n";
+      
+      # print $log_file_handle "$letter_content\n";
 
       # using decode_json would be handy, except for the fact that it craps
       # out entirely and halts the entire program on malformed UTF-8 data...
