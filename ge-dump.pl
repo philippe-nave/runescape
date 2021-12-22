@@ -54,25 +54,6 @@ exit; #DEBUG
       }
    }
 
-
-#   # decode this JSON object into a data structure
-#   my $category_list = decode_json($content);
-#   my @alpha = @{ $category_list->{'alpha'} };
-#
-#   foreach my $a ( @alpha ) {
-#      my $letter = $a->{"letter"};
-#      my $items = $a->{"items"};
-#      print "Letter $letter has $items items.\n";
-#   
-#      # pound sign must be specified as %23
-#      if ( $letter eq "#" ) { $letter = "%23"; }
-#
-#      if ($items > 0) {
-#         fetch_items($category_id,$letter,$items);
-#      }
-#   
-#   } # end of loop through letter list for this category
-
    print "\n";
 
 } # end of fetch_category subroutine
@@ -93,57 +74,43 @@ sub fetch_items {
       print "Got page $page_num of results\n";
       # print "$letter_content\n";
 
-      # bad jagex data - how to code around this?
-      # if ( $category_id == 0 && $letter eq "p" && $page_num == 2 ) { next; }
-      # if ( $category_id == 2 && $letter eq "a" && $page_num == 1 ) { next; }
-
-      # decode this JSON object into a data structure
-
-      # if ($letter_content =~ /^{/) {
-      #    $letter_text = decode_json($letter_content);
-      # } else {
-      #    next;
-      # }
-
-      # kind of an ill-informed speculative Hail Mary...
+      # using decode_json would be handy, except for the fact that it craps
+      # out entirely and halts the entire program on malformed UTF-8 data...
       #
-      # my $json = JSON->new;
-      # $letter_text = $json->decode_prefix($letter_content);
-      # print "DEBUG: letter_text is $letter_text\n";
+      # $letter_text = decode_json($letter_content);
+      #
+      # my @items = @{ $letter_text->{'items'} };
+      # foreach my $item ( @items ) {
+      # 
+      #   my $icon = $item->{"icon"};
+      #   my $icon_large = $item->{"icon_large"};
+      #   my $id = $item->{"id"};
+      #   my $type = $item->{"type"};
+      #   my $typeIcon = $item->{"typeIcon"};
+      #   my $name = $item->{"name"};
+      #   my $description = $item->{"description"};
+      #   my $members = $item->{"members"};
+      #
+      #   print "\n";
+      #   print "name: $name\n";
+      #   # print "icon: $icon\n";
+      #   # print "icon_large: $icon_large\n";
+      #   print "id: $id type: $type members: $members\n";
+      #   # print "typeIcon: $typeIcon\n";
+      #   print "description: $description\n";
+      #
+      #   my $current_trend = $item->{"current"}->{"trend"};
+      #   my $current_price = $item->{"current"}->{"price"};
+      #   my $today_trend = $item->{"today"}->{"trend"};
+      #   my $today_price = $item->{"today"}->{"price"};
+      #   print "current trend: $current_trend current price: $current_price\n";
+      #   print "today trend: $today_trend today price: $today_price\n";
+      #
+      # } # end of loop through items
       
+      # parse JSON string for this page of results (max 12 items)
       
-      $letter_text = decode_json($letter_content);
-      
-
-      my @items = @{ $letter_text->{'items'} };
-      foreach my $item ( @items ) {
-
-         my $icon = $item->{"icon"};
-         my $icon_large = $item->{"icon_large"};
-         my $id = $item->{"id"};
-         my $type = $item->{"type"};
-         my $typeIcon = $item->{"typeIcon"};
-         my $name = $item->{"name"};
-         my $description = $item->{"description"};
-         my $members = $item->{"members"};
-
-         print "\n";
-         print "name: $name\n";
-         # print "icon: $icon\n";
-         # print "icon_large: $icon_large\n";
-         print "id: $id type: $type members: $members\n";
-         # print "typeIcon: $typeIcon\n";
-         print "description: $description\n";
-
-         my $current_trend = $item->{"current"}->{"trend"};
-         my $current_price = $item->{"current"}->{"price"};
-         my $today_trend = $item->{"today"}->{"trend"};
-         my $today_price = $item->{"today"}->{"price"};
-         print "current trend: $current_trend current price: $current_price\n";
-         print "today trend: $today_trend today price: $today_price\n";
-
-      } # end of loop through items
-
+      parse_json_item($letter_content);
 
    } # end of loop through the pages of results
 
@@ -153,17 +120,114 @@ sub fetch_items {
 
 } # end of fetch_items subroutine
 
+sub parse_json_item { # parse up to 12 items from a JSON item list (page of results)
 
+   # This is weird because it comes in pieces (chunks of 12 items).
+   # It doesn't make sense to return anything from this routine - just
+   # update the database (insert or update) as you identify items on
+   # the way down the lists
 
-#=================================================================
+   my $json_item_string = $_[0];
+   #print "\n$json_item_string\n";
+
+   # lose the opening and closing curly braces
+   
+   $json_item_string =~ s/^{//;
+   $json_item_string =~ s/}$//;
+   #print "$json_item_string\n";
+
+   # lose the open [ set and closing ]
+
+   $json_item_string =~ s/^[^\[]+\[//;
+   $json_item_string =~ s/\]$//;
+   #print "$json_item_string\n";
+
+   # try to eat "today":{"trend":"neutral","price":0}, strings out of the JSON
+   # we don't really want that information anyway at this level
+   $json_item_string =~ s/\"today\":{[^\}]+},//g;
+   # print "$json_item_string\n\n";
+
+   # try to eat "current":{"trend":"neutral","price":26}, strings out of the JSON
+   # we don't really want that information anyway at this level
+
+   $json_item_string =~ s/\"current\":{[^\}]+},//g;
+   # print "$json_item_string\n\n";
+
+   # now, we have to pull out sets of things that contain commas
+   # i.e. {foo:bar,zen:quux},{next:yang,zing:bop} with each {} being an item
+
+   my @sets = $json_item_string =~ /\{[^\}]+\}/g; # just match {stuff} one after another
+
+   foreach (@sets) {
+
+      my $setpiece = $_;
+
+      # each set piece is wrapped in {} - remove this
+
+      $setpiece =~ s/^\{//;
+      $setpiece =~ s/\}$//;
+
+      # just whack all the double quotes
+      $setpiece =~ s/\"//g;
+
+      # the colon : delimiter also appears in URLs for icons. Arrrghhh....
+      # just whack those URL strings for now (seriously ugly but
+      # hopefully effective approach)
+      
+      $setpiece =~ s/https://g;
+      $setpiece =~ s/http://g;
+
+      my %sethash = split(/[,:]/, $setpiece);
+
+      # foreach my $setkey (keys %sethash) {
+      #    print "Key: $setkey ";
+      #    my $setvalue = $sethash{$setkey};
+      #    print "Value: $setvalue\n";
+      # } # end of loop through the hash for this item definition
+
+      my $db_item_id = $sethash{"id"};
+      my $db_name = $sethash{"name"};
+      my $db_description = $sethash{"description"};
+      my $db_type = $sethash{"type"};
+      my $db_members = 0;
+      if ( $sethash{"members"} eq "true" ) { $db_members = 1; }
+
+      print "Adding/updating [$db_name] to the items table\n";
+
+      # ok, we have the variables for the db update now
+
+      my $sql = "insert into items (item_id, name, description, type, members) ";
+      $sql .= "values (?,?,?,?,?) ";
+      $sql .= "on duplicate key update name=?, description=?, type=?, members=? ";
+
+      my $stmt = $dbh->prepare($sql);
+
+      # first group of bind fields (for the insert)
+      $stmt->bind_param(1,$db_item_id);
+      $stmt->bind_param(2,$db_name);
+      $stmt->bind_param(3,$db_description);
+      $stmt->bind_param(4,$db_type);
+      $stmt->bind_param(5,$db_members);
+
+      # second group of bind fields (for the update)
+      $stmt->bind_param(6,$db_name);
+      $stmt->bind_param(7,$db_description);
+      $stmt->bind_param(8,$db_type);
+      $stmt->bind_param(9,$db_members);
+
+      $stmt->execute();
+      my $err = $dbh->err;
+
+      if ($err) {
+         print "ERROR on database insert into items table: $err\n";
+      }
  
- 
+
+   } # end of loop through sets of item definition pairs
 
 
 
-
-
-
+} # end of parse_json_item subroutine
 
 sub parse_json_types {
 
