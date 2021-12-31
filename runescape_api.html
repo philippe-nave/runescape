@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Runescape API</title>
+<!--#include virtual="metatags.html" -->
+</head>
+<body>
+<center><h1>Runescape API</h1></center>
+
+<p>
+My path down the Runescape API (yours may vary) starts with the category 
+table, since that's the set of API URLs I started looking at. At this 
+moment, there are 41 categories defined. I got this list from 
+<a href="https://runescape.wiki/w/Application_programming_interface#Grand_Exchange_Database_API">this page</a>.
+</p>
+
+<p>
+<center>
+<table border=1 cellspacing=0 cellpadding=2>
+<tr><th>ID</th><th>Name</th><th>ID</th><th>Name</th><th>ID</th><th>Name</th></tr>
+<tr><td>0</td><td>Miscellaneous</td><td>1</td><td>Ammo</td><td>2</td><td>Arrows</td></tr>
+<tr><td>3</td><td>Bolts</td><td>4</td><td>Construction materials</td><td>5</td><td>Construction products</td></tr>
+<tr><td>6</td><td>Cooking ingredients</td><td>7</td><td>Costumes</td><td>8</td><td>Crafting materials</td></tr>
+<tr><td>9</td><td>Familiars</td><td>10</td><td>Farming produce</td><td>11</td><td>Fletching materials</td></tr>
+<tr><td>12</td><td>Food and Drink</td><td>13</td><td>Herblore materials</td><td>14</td><td>Hunting equipment</td></tr>
+<tr><td>15</td><td>Hunting Produce</td><td>16</td><td>Jewellery</td><td>17</td><td>Mage armour</td></tr>
+<tr><td>18</td><td>Mage weapons</td><td>19</td><td>Melee armour - low level</td><td>20</td><td>Melee armour - mid level</td></tr>
+<tr><td>21</td><td>Melee armour - high level</td><td>22</td><td>Melee weapons - low level</td><td>23</td><td>Melee weapons - mid level</td></tr>
+<tr><td>24</td><td>Melee weapons - high level</td><td>25</td><td>Mining and Smithing</td><td>26</td><td>Potions</td></tr>
+<tr><td>27</td><td>Prayer armour</td><td>28</td><td>Prayer materials</td><td>29</td><td>Range armour</td></tr>
+<tr><td>30</td><td>Range weapons</td><td>31</td><td>Runecrafting</td><td>32</td><td>Runes, Spells and Teleports</td></tr>
+<tr><td>33</td><td>Seeds</td><td>34</td><td>Summoning scrolls</td><td>35</td><td>Tools and containers</td></tr>
+<tr><td>36</td><td>Woodcutting product</td><td>37</td><td>Pocket items</td><td>38</td><td>Stone spirits</td></tr>
+<tr><td>39</td><td>Salvage</td><td>40</td><td>Firemaking products</td><td>41</td><td>Archaeology materials</td></tr>
+</table>
+</center>
+</p>
+
+<p>
+The next level of this rabbit hole is the URL that lists items by category.
+Along the way, there's a query that provides a the number of
+category items by their initial letter (66 "a" items, 85 "b" items, etc). This query serves as a 
+simple example of the JSON data encoding scheme, so it's worth looking at.
+<a target="_blank" href="https://secure.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=0">Link</a>
+(That's a link to category 0, by the way)
+</p>
+
+<p>
+Pick a category: 
+<select name="categories" id="categories" onChange="setCategory()">
+<option value="0">Miscellaneous</option>
+<option value="1">Ammo</option>
+<option value="2">Arrows</option>
+<option value="3">Bolts</option>
+<option value="4">Construction materials</option>
+<option value="5">Construction products</option>
+<option value="6">Cooking ingredients</option>
+<option value="7">Costumes</option>
+<option value="8">Crafting materials</option>
+<option value="9">Familiars</option>
+<option value="10">Farming produce</option>
+<option value="11">Fletching materials</option>
+<option value="12">Food and Drink</option>
+<option value="13">Herblore materials</option>
+<option value="14">Hunting equipment</option>
+<option value="15">Hunting Produce</option>
+<option value="16">Jewellery</option>
+<option value="17">Mage armour</option>
+<option value="18">Mage weapons</option>
+<option value="19">Melee armour - low level</option>
+<option value="20">Melee armour - mid level</option>
+<option value="21">Melee armour - high level</option>
+<option value="22">Melee weapons - low level</option>
+<option value="23">Melee weapons - mid level</option>
+<option value="24">Melee weapons - high level</option>
+<option value="25">Mining and Smithing</option>
+<option value="26">Potions</option>
+<option value="27">Prayer armour</option>
+<option value="28">Prayer materials</option>
+<option value="29">Range armour</option>
+<option value="30">Range weapons</option>
+<option value="31">Runecrafting</option>
+<option value="32">Runes, Spells and Teleports</option>
+<option value="33">Seeds</option>
+<option value="34">Summoning scrolls</option>
+<option value="35">Tools and containers</option>
+<option value="36">Woodcutting product</option>
+<option value="37">Pocket items</option>
+<option value="38">Stone spirits</option>
+<option value="39">Salvage</option>
+<option value="40">Firemaking products</option>
+<option value="41">Archaeology materials</option>
+</select>
+<input type="text" id="category_json"
+<script>
+</script>
+<script>
+   function setCategory(){
+      var dropdown = document.getElementById("categories");
+      var selection = dropdown.value;
+      var categoryTextBox = document.getElementById("category_json");
+      var categoryURLstring = "https://secure.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=" + selection;
+      categoryTextBox.value = selection;
+
+      // 12/30/2021 tinkering
+
+      var Httpreq = new XMLHttpRequest(); // a new request
+      Httpreq.open("GET",categoryURLstring,false);
+      // the actual call opens up a whole can of worms about a
+      // synchronous call (wait for result) versus an asynchronous
+      // call (ask politely, wait for result). There's a way to whack
+      // the thing and make it synchronous, but that might not be the 
+      // wise choice for the Runescape API and its utterly paranoid
+      // rate limiting and flood protection. The rabbit hole here is
+      // "how to enable CORS in {language}".
+      //
+      // holy shit, that is indeed a rathole. WTF CORS, over!
+      // another rathole:
+      //  https://stackoverflow.com/questions/45238537/make-a-synchronous-redirectable-cors-request-in-chrome
+      //
+      // rats - tried it on firefox, same problem. G'nite!
+      //
+      Httpreq.send(null);
+      // alert(Httpreq.responseTexa)t;          
+
+      // end of 12/30/2021 tinkering
+
+      // loadURL();
+
+       var textTextBox = document.getElementById("urlSource");
+       textTextBox.value = categoryURLstring;
+       var iframe = document.getElementById("urlDisplay");
+       iframe.src = document.getElementById("urlSource").value;
+
+       var text2TextBox = document.getElementById("text2");
+       text2TextBox.value = document.getElementById("urlDisplay").value;
+
+       var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+var iframeBody = iframeDocument.body;
+
+       text2TextBox.value = iframeDocument;
+       // alert(iframeBody);
+
+
+   }
+
+    function loadUrl() {
+       // document.getElementById("urlDisplay").src = document.getElementById("urlSource").value;
+       var textTextBox = document.getElementById("urlSource");
+       //textTextBox.value = categoryURLstring;
+       textTextBox.value = "foo";;
+       //document.getElementById("urlDisplay").src = document.getElementById("urlSource").value;
+
+    }
+</script>
+</p>
+
+<p>
+   <input type="text" id="urlSource" value=categoryURLstring> <input type="button" value="Go" onclick="loadUrl()">
+   <input type="text" id="text2" value="bar">
+<iframe id="urlDisplay" width="200" height="200">
+</p>
+
+</body></html>
