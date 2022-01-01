@@ -104,8 +104,8 @@ Pick a category:
 
       // 12/30/2021 tinkering
 
-      var Httpreq = new XMLHttpRequest(); // a new request
-      Httpreq.open("GET",categoryURLstring,false);
+      // var Httpreq = new XMLHttpRequest(); // a new request
+      // Httpreq.open("GET",categoryURLstring,false);
       // the actual call opens up a whole can of worms about a
       // synchronous call (wait for result) versus an asynchronous
       // call (ask politely, wait for result). There's a way to whack
@@ -122,26 +122,54 @@ Pick a category:
       //
       // OOO - study javascript promises. Very cool call and response mechanism!
       // https://www.youtube.com/watch?v=DHvZLI7Db8E
-      Httpreq.send(null);
+      // Httpreq.send(null);
       // alert(Httpreq.responseTexa)t;          
 
       // end of 12/30/2021 tinkering
 
+      // 12/31/2021 tinkering
+
+// ok - this simple request generates console outout as follows:
+// fetch(categoryURLstring)
+// Access to fetch at 'https://secure.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=19' from origin 'http://okbanlon.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
+// runescape_api.html:137 GET https://secure.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=19 net::ERR_FAILED 200
+// also, we get an alert text box: TypeError: Failed to fetch
+//
+// so - let's try it with no-cors specified
+fetch(categoryURLstring, { mode: 'no-cors' })
+// hmmm - no console complaints at all, but an alert text box: SyntaxError: Unexpected end of input
+// wrapped categoryURLstring in double quotes: alert now SyntaxError: Unexpected token < in JSON at position 0
+// and console complaint runescape_api.html:144 GET http://okbanlon.com/runescape/categoryURLstring 404 (Not Found)
+// the double quotes were a bad idea
+  .then(response => response.json())
+  // .then(data => {
+  //    console.log(data); })
+  .catch(err => alert(err)) 
+// );
+
+// console output: console.warn('crbug/1173575, non-JS module files deprecated.'); (this, from Runescape)
+      
+      // end of 12/31/2021 tinkering
+
       // loadURL();
 
-       var textTextBox = document.getElementById("urlSource");
-       textTextBox.value = categoryURLstring;
-       var iframe = document.getElementById("urlDisplay");
-       iframe.src = document.getElementById("urlSource").value;
 
-       var text2TextBox = document.getElementById("text2");
-       text2TextBox.value = document.getElementById("urlDisplay").value;
-
-       var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-var iframeBody = iframeDocument.body;
-
-       text2TextBox.value = iframeDocument;
-       // alert(iframeBody);
+      // 12/31/2021 - ok, the whole cross-site iframe thing is bogus,
+      // apparently due to security concerns.. taking it out entirely
+      //
+      // var textTextBox = document.getElementById("urlSource");
+      // textTextBox.value = categoryURLstring;
+      // var iframe = document.getElementById("urlDisplay");
+      // iframe.src = document.getElementById("urlSource").value;
+      //
+      // var text2TextBox = document.getElementById("text2");
+      // text2TextBox.value = document.getElementById("urlDisplay").value;
+      //
+      // var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+      //var iframeBody = iframeDocument.body;
+      //
+      //      text2TextBox.value = iframeDocument;
+      // alert(iframeBody);
 
 
    }
