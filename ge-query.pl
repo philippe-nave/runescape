@@ -120,22 +120,23 @@ foreach my $a ( @alpha ) {
       # ok, well - this didn't work..
       #
       # my @current = @{ $item->{'current'} };
-      # foreach my $current_item ( @items ) { # should only be one item, i think?
-      #    my $trend = $current_item->{"trend"};
-      #    my $price = $current_item->{"price"};
-      #    print "Current trend: $trend Current price: $price\n";
+      # foreach my $current_item ( @current ) { # should only be one item, i think?
+      #     my $trend = $current_item->{"trend"};
+      #     my $price = $current_item->{"price"};
+      #     print "Current trend: $trend Current price: $price\n";
       # }
 
-      my $current = $item->{"current"};
-      print "current: $current\n";
+      # my @current = $item->{"current"};
+      # print "current: @current\n";
  
       # hmmm.. 'current' is apparently a hash
       # aaand, this doesn't work either. Bedtime for me!
 
-      my %current = $item->{"current"};
-      foreach my $current_key (keys %current){
-         print "$current_key $current{$current_key}\n";
-      }
+      # my %current = %$item->{"current"};
+      # foreach my $current_key (keys %current){
+      #    print "$current_key %current{$current_key}\n";
+      # }
+      
 
 
       print "\n";
@@ -145,6 +146,13 @@ foreach my $a ( @alpha ) {
       print "id: $id type: $type members: $members\n";
       print "typeIcon: $typeIcon\n";
       print "description: $description\n";
+
+      my $current_trend = $item->{"current"}->{"trend"};
+      my $current_price = $item->{"current"}->{"price"};
+      my $today_trend = $item->{"today"}->{"trend"};
+      my $today_price = $item->{"today"}->{"price"};
+      print "current trend: $current_trend current price: $current_price\n";
+      print "today trend: $today_trend today price: $today_price\n";
 
 # {"current":{"trend":"neutral","price":"124.2m"},"today":{"trend":"neutral","price":0},}]}
 
