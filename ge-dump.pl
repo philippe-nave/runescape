@@ -12,8 +12,30 @@ use Data::Dumper;
 
 my $dbh = utilities::getDatabaseHandle;
 
-open $log_file_handle, '>', "json.log"; 
+$LOGDIR="/home/okbanlon/logs/runescape";
 
+# build log file timestamp name from date (yes, it's ugly)
+#
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
+$year += 1900;
+$mon += 1;
+$isdst = $isdst; # suppress 'not used' warning, that's all
+$yday = $yday; # suppress 'not used' warning, that's all
+$wday = $wday; # suppress 'not used' warning, that's all
+$log_mday = $mday;
+$log_mon = $mon;
+$log_hour = $hour;
+$log_min = $min;
+$log_sec = $sec;
+if ($log_mday < 10) { $log_mday = "0$log_mday"; }
+if ($log_mon < 10) { $log_mon = "0$log_mon"; }
+if ($log_hour < 10) { $log_hour = "0$log_hour"; }
+if ($log_min < 10) { $log_min = "0$log_min"; }
+if ($log_sec < 10) { $log_sec = "0$log_sec"; }
+
+$LOGFILE="$LOGDIR/ge-dump-$year-$log_mon-$log_mday-$log_hour:$log_min:$log_sec";
+
+open $log_file_handle, '>', $LOGFILE; 
 
 $sql = "select category_id, category_name from categories order by category_id";
 $stmt = $dbh->prepare($sql);
@@ -21,13 +43,16 @@ $stmt->execute();
 while ($hash = $stmt->fetchrow_hashref) {
    $category_id = $hash->{"category_id"};
    $category_name = $hash->{"category_name"};
-   print "Looking at category $category_id ( $category_name )\n";
+   print $log_file_handle "Looking at category $category_id ( $category_name )\n";
 
    fetch_category($category_id);
 
+#DEBUG - only do one iteration, for debugging
+last;
+
 } #end of loop through category ID list from database
 
-print "The program ran for ", time() - $^T, " seconds\n";
+print $log_file_handle "The program ran for ", time() - $^T, " seconds\n";
 close $log_file_handle;
 
 exit;  # end of main program body
@@ -48,15 +73,16 @@ sub fetch_category {
    foreach $letter (keys %letters_hash) {
 
       my $items = $letters_hash{$letter};
-      print "Category: $category_id Letter: $letter Items: $items\n";
+      print $log_file_handle "Category: $category_id Letter: $letter Items: $items\n";
 
       # pound sign must be specified as %23
       if ( $letter eq "#" ) { $letter = "%23"; }
 
       if ($items > 0) {
          fetch_items($category_id,$letter,$items);
-#exit; #DEBUG
       }
+#DEBUG - only do one letter, not all letters
+last;
    }
 
    print "\n";
@@ -70,7 +96,7 @@ sub fetch_items {
    my $items = $_[2];
 
    my $page_count = int ($items / 12) + 1;
-   print "Item count is $items ($page_count pages)\n";
+   print $log_file_handle "Item count is $items ($page_count pages)\n";
 
    for (my $page_num = 1; $page_num <= $page_count; $page_num++) {
 
@@ -79,7 +105,7 @@ sub fetch_items {
 
       sleep(10); # half-assed workaround for site's flood protection
 
-      print "Got page $page_num of results for category $category_id letter $letter\n";
+      print $log_file_handle "Got page $page_num of results for category $category_id letter $letter\n";
       # print "$letter_content\n";
       
       # print $log_file_handle "$letter_content\n";
@@ -202,7 +228,7 @@ sub parse_json_item { # parse up to 12 items from a JSON item list (page of resu
       my $db_members = 0;
       if ( $sethash{"members"} eq "true" ) { $db_members = 1; }
 
-      print "Adding/updating [$db_name] to the items table\n";
+      print $log_file_handle "Adding/updating [$db_name] to the items table\n";
 
       # ok, we have the variables for the db update now
 
@@ -229,7 +255,7 @@ sub parse_json_item { # parse up to 12 items from a JSON item list (page of resu
       my $err = $dbh->err;
 
       if ($err) {
-         print "ERROR on database insert into items table: $err\n";
+         print $log_file_handle "ERROR on database insert into items table: $err\n";
       }
  
 
