@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>tinker</title>
+</head>
+<body>
+<center><h1>tinkering</h1></center>
+<p>Just tinkering with JavaScript</p>
+
+<p>
+<input type="text" id="text1" value="initial value">
+<input type="button" value="Go" onclick="changetext1()">
+<hr>
+<iframe id="urlDisplay" width="200" height="200"></iframe>
+<input type="button" value="iframe" onclick="changeiframe()">
+<input type="button" value="fetch" onclick="tryfetch()">
+</p>
+
+<script>
+function changeiframe() {
+
+   var URL="https://secure.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=0"
+
+   var iframe = document.getElementById("urlDisplay");
+
+   iframe.src = URL;
+
+   // Error: Refused to frame 'https://secure.runescape.com/' because an ancestor
+   // violates the following Content Security Policy directive:
+   // "frame-ancestors https://*.runescape.com:* https://*.jagex.com:*".
+
+} // end of function changeiframe
+
+
+function tryfetch() {
+
+   // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+
+   // try a simple fetch with logging to console
+   fetch('http://okbanlon.com/runescape/tinker.json')
+     .then(response => response.json())
+     .then(data => console.log(data));
+
+} // end of function tryfetch
+</script>
+
+<script>
+function changetext1() {
+
+   var textTextBox = document.getElementById("text1");
+   textTextBox.value = "foo";
+
+   var URL="https://secure.runescape.com/m=itemdb_rs/api/catalogue/category.json?category=0"
+   // var URL="http://okbanlon.com/runescape/tinker.html"
+
+   // okbanlon page fetch works, but runescape JSON page fetch does not?
+
+   var xmlhttp=new XMLHttpRequest();
+
+   xmlhttp.onreadystatechange=function()
+      {
+        // don't know exactly what this qualifier does, other than the 200 status
+        // if (xmlhttp.readyState==4 && xmlhttp.status==200)
+        // {
+        //    alert(xmlhttp.responseText);
+        // }
+
+        // hmm - on a good vanilla request, this function fires twice - once with a 
+        // ready state of 1, then with a ready state of 4. (once on the open, again 
+        // on the send - see code below)
+
+        // when you try the runescape URL, execution just flies off into the weeds 
+        // on the .send call - you don't even get 'Dippus2' alert
+        // aha - look at console output. We're hitting that CORS permission problem
+        //
+        // switching to asynchronous with 'true' on the open gets a second response
+        // and 'dippus2' fires - but no useful response text (state 4, status 0, CORS
+        // error in console
+
+        alert ("xmlhttp.readyState is " + xmlhttp.readyState + " status is " + xmlhttp.status + " response is " + xmlhttp.responseText );
+      }
+
+   // false is synchronous, true is asynchronous
+   //
+   // xmlhttp.open("GET", URL, false);
+   xmlhttp.open("GET", URL, true);
+   alert ("Dippus");
+
+   xmlhttp.send();
+   alert ("Dippus 2");
+}
+</script>
+
+
+
+
+</body>
+</html>
+
