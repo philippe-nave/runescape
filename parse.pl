@@ -5,6 +5,8 @@
 
 use Data::Dumper;
 
+open(FH, '>', "parse.txt");
+
 $json = "{\"types\":[],\"alpha\":[{\"letter\":\"#\",\"items\":3},{\"letter\":\"a\",\"items\":66},{\"letter\":\"b\",\"items\":85},{\"letter \":\"c\",\"items\":101},{\"letter\":\"d\",\"items\":55},{\"letter\":\"e\",\"items\":21},{\"letter\":\"f\",\"items\":40},{\"letter\" :\"g\",\"items\":49},{\"letter\":\"h\",\"items\":26},{\"letter\":\"i\",\"items\":28},{\"letter\":\"j\",\"items\":2},{\"letter\":\"k \",\"items\":13},{\"letter\":\"l\",\"items\":22},{\"letter\":\"m\",\"items\":47},{\"letter\":\"n\",\"items\":6},{\"letter\":\"o\",\" items\":26},{\"letter\":\"p\",\"items\":96},{\"letter\":\"q\",\"items\":0},{\"letter\":\"r\",\"items\":48},{\"letter\":\"s\",\"ite ms\":134},{\"letter\":\"t\",\"items\":33},{\"letter\":\"u\",\"items\":1},{\"letter\":\"v\",\"items\":22},{\"letter\":\"w\",\"items \":20},{\"letter\":\"x\",\"items\":1},{\"letter\":\"y\",\"items\":2},{\"letter\":\"z\",\"items\":9}]}";
 
 
@@ -57,13 +59,30 @@ foreach (@sets) {
 
    %sethash = split(/[,:]/, $setpiece);
 
-   foreach $setkey (keys %sethash) {
+   # sorting the keys gives consistency of output;
+   # order is not necessarily the same for each hash otherwise
+
+   foreach $setkey (sort keys %sethash) {
+
+      # skip unwanted crap
+
+      if ($setkey eq "icon") { next; }
+      if ($setkey eq "icon_large") { next; }
+      if ($setkey eq "typeIcon") { next; }
+      if ($setkey eq "type") { next; }
+      if ($setkey eq "members") { next; }
+
       print "Key: $setkey ";
       my $setvalue = $sethash{$setkey};
       print "Value: $setvalue\n";
+
+      print FH "$setkey $setvalue | ";
    }
+
+   print FH "\n";
 }
 
+close(FH);
 
 
 
